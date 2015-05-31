@@ -111,8 +111,8 @@ namespace ObjectPoolingTest
 			///
 			/// Set & Get & Count
 			///
-			pool.Set(tt11, type1); Assert.IsNull(pool.Get(type1)); Assert.AreEqual(pool.Count, 1);
-			pool.Set(tt12, type1); Assert.IsNull(pool.Get(type1)); Assert.AreEqual(pool.Count, 1);
+			pool.Set(tt11, type1); Assert.IsNull(pool.Get(type2)); Assert.AreEqual(pool.Count, 1);
+			pool.Set(tt12, type1); Assert.IsNull(pool.Get(type2)); Assert.AreEqual(pool.Count, 1);
 			pool.Set(tt21, type2); Assert.AreSame(pool.Get(type2), tt21); Assert.AreEqual(pool.Count, 2);
 			pool.Set(tt22, type2); Assert.AreSame(pool.Get(type1), tt11); Assert.AreEqual(pool.Count, 2);
 			Assert.IsNull(pool.Get("unknown"));
@@ -148,16 +148,24 @@ namespace ObjectPoolingTest
 			///
 			/// RegistClass
 			///
-			manager.RegistClassType(type1, new TestTarget1Factory()); Assert.AreEqual(manager.m_idlePool.Count, 1); Assert.AreEqual(manager.m_busyPool.Count, 0);
-			manager.RegistClassType(type2, new TestTarget2Factory()); Assert.AreEqual(manager.m_idlePool.Count, 2); Assert.AreEqual(manager.m_busyPool.Count, 0);
+			manager.RegistClassType(type1, new TestTarget1Factory()); Assert.AreEqual(manager.m_idlePool.Count, 0); Assert.AreEqual(manager.m_busyPool.Count, 0);
+			manager.RegistClassType(type2, new TestTarget2Factory()); Assert.AreEqual(manager.m_idlePool.Count, 0); Assert.AreEqual(manager.m_busyPool.Count, 0);
 
 			///
 			/// Apply
 			///
 			var tt11 = manager.Apply(type1, "test"); Assert.AreSame(tt11.GetType().Name, type1); Assert.AreEqual(manager.m_busyPool.CountSet("test"), 1); Assert.AreEqual(manager.m_busyPool.Count, 1);
 			var tt12 = manager.Apply(type1); Assert.AreSame(tt12.GetType().Name, type1); Assert.AreEqual(manager.m_busyPool.CountSet(), 1); Assert.AreEqual(manager.m_busyPool.Count, 2);
-			var tt21 = manager.Apply(type2, "test"); Assert.AreSame(tt21.GetType().Name, type1); Assert.AreEqual(manager.m_busyPool.CountSet("test"), 2); Assert.AreEqual(manager.m_busyPool.Count, 2);
-			var tt22 = manager.Apply(type2); Assert.AreSame(tt22.GetType().Name, type1); Assert.AreEqual(manager.m_busyPool.CountSet(), 2); Assert.AreEqual(manager.m_busyPool.Count, 2);
+			var tt21 = manager.Apply(type2, "test"); Assert.AreSame(tt21.GetType().Name, type2); Assert.AreEqual(manager.m_busyPool.CountSet("test"), 2); Assert.AreEqual(manager.m_busyPool.Count, 2);
+			var tt22 = manager.Apply(type2); Assert.AreSame(tt22.GetType().Name, type2); Assert.AreEqual(manager.m_busyPool.CountSet(), 2); Assert.AreEqual(manager.m_busyPool.Count, 2);
+
+			///
+			/// Recycle
+			///
+			tt11.Dispose(); Assert.AreEqual(manager.m_idlePool.Count, 1); Assert.AreEqual(manager.m_idlePool.CountSet(type1), 1);
+			tt12.Dispose(); Assert.AreEqual(manager.m_idlePool.Count, 1); Assert.AreEqual(manager.m_idlePool.CountSet(type1), 2);
+			tt21.Dispose(); Assert.AreEqual(manager.m_idlePool.Count, 2); Assert.AreEqual(manager.m_idlePool.CountSet(type2), 1);
+			tt22.Dispose(); Assert.AreEqual(manager.m_idlePool.Count, 2); Assert.AreEqual(manager.m_idlePool.CountSet(type2), 2);
 		}
 	}
 }

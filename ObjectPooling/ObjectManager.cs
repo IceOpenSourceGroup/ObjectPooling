@@ -43,7 +43,7 @@ namespace ObjectPooling
 
 		public IPoolable Apply(string className, string usage = null)
 		{
-			if (this.m_data.ContainsKey(className))
+			if (!this.m_data.ContainsKey(className))
 				throw new ClassNotDefinedException(className);
 
 			//get the obj

@@ -77,8 +77,10 @@ namespace ObjectPooling
 			}
 		}
 
-		public int CountSet(string name)
+		public int CountSet(string name = null)
 		{
+			if (string.IsNullOrEmpty(name)) name = "System";
+
 			lock (this)
 			{
 				if (this.m_data.ContainsKey(name))
