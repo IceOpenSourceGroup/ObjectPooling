@@ -155,9 +155,9 @@ namespace ObjectPoolingTest
 			/// Apply
 			///
 			var tt11 = manager.Apply(type1, "test"); Assert.AreSame(tt11.GetType().Name, type1); Assert.AreEqual(manager.m_busyPool.CountSet("test"), 1); Assert.AreEqual(manager.m_busyPool.Count, 1);
-			var tt12 = manager.Apply(type1); Assert.AreSame(tt11.GetType().Name, type1); Assert.AreEqual(manager.m_busyPool.CountSet(), 1); Assert.AreEqual(manager.m_busyPool.Count, 2);
-			var tt21 = manager.Apply(type2, "test");
-			var tt22 = manager.Apply(type2);
+			var tt12 = manager.Apply(type1); Assert.AreSame(tt12.GetType().Name, type1); Assert.AreEqual(manager.m_busyPool.CountSet(), 1); Assert.AreEqual(manager.m_busyPool.Count, 2);
+			var tt21 = manager.Apply(type2, "test"); Assert.AreSame(tt21.GetType().Name, type1); Assert.AreEqual(manager.m_busyPool.CountSet("test"), 2); Assert.AreEqual(manager.m_busyPool.Count, 2);
+			var tt22 = manager.Apply(type2); Assert.AreSame(tt22.GetType().Name, type1); Assert.AreEqual(manager.m_busyPool.CountSet(), 2); Assert.AreEqual(manager.m_busyPool.Count, 2);
 		}
 	}
 }
