@@ -118,6 +118,11 @@ namespace ObjectPooling
 		/// count sets
 		/// </summary>
 		int Count { get; }
+
+		/// <summary>
+		/// to cleanup the objects that will not be used recently
+		/// </summary>
+		void Cleanup();
 	}
 
 	/// <summary>
@@ -152,5 +157,10 @@ namespace ObjectPooling
 		/// clear all the data in the set
 		/// </summary>
 		void Clear();
+
+		/// <summary>
+		/// to cleanup the objects that will not be used recently
+		/// </summary>
+		void Cleanup();
 	}
 }

@@ -2,17 +2,43 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 
 namespace ObjectPooling
 {
 	internal class ObjectManager : IObjectManager
 	{
+		#region [Singleton]
+
+		private static ObjectManager m_instance = null;
+		private static object thisObject = new object();
+
+		public static ObjectManager Instance
+		{
+			get
+			{
+				if (m_instance == null)
+				{
+					lock (thisObject)
+					{
+						if (m_instance == null)
+						{
+							m_instance = new ObjectManager();
+						}
+					}
+				}
+				return m_instance;
+			}
+		}
+
+		#endregion [Singleton]
+
 		#region [Data]
 
 		private Dictionary<string, IPoolableFactory> m_data;
 		internal IObjectPool m_idlePool;
 		internal IObjectPool m_busyPool;
-
+		private Timer m_timer;
 		#endregion [Data]
 
 		#region [Constructor]
@@ -20,11 +46,28 @@ namespace ObjectPooling
 		public ObjectManager()
 		{
 			this.m_data = new Dictionary<string, IPoolableFactory>();
-			this.m_idlePool = new ObjectPool();
-			this.m_busyPool = new ObjectPool(true);
+			this.RegistClassType("Self.ObjectSet", new ObjectSetFactory());
+
+			var p = new ObjectPool(this);
+			this.m_idlePool = p;
+
+			p = new ObjectPool(this, true);
+			p.CreateAdminNode();
+			this.m_busyPool = p;
+			this.m_timer = new Timer(new TimerCallback(this.Cleanup));
+			this.m_timer.Change(1000, 0);
 		}
 
 		#endregion [Constructor]
+
+		#region [Callback]
+
+		private void Cleanup(object state)
+		{
+			this.m_idlePool.Cleanup();
+		}
+
+		#endregion [Callback]
 
 		#region IObjectManager Members
 
@@ -73,7 +116,11 @@ namespace ObjectPooling
 
 		public void Recycle(string usage)
 		{
-			this.m_busyPool.Remove(usage);
+			IPoolable r = null;
+			while ((r = this.m_busyPool.Get(usage)) != null)
+			{
+				this.m_idlePool.Set(r, r.ClassName);
+			}
 		}
 
 		#endregion IObjectManager Members

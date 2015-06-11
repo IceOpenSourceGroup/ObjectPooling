@@ -9,6 +9,8 @@ namespace ObjectPooling
 	{
 		#region [Data]
 
+		private int m_id;
+		private IObjectManager m_manager;
 		private Dictionary<string, IObjectSet> m_data;
 		private bool m_autoCleanup;
 
@@ -16,8 +18,10 @@ namespace ObjectPooling
 
 		#region [Constructor]
 
-		public ObjectPool(bool autoCleanup = false)
+		public ObjectPool(IObjectManager manager, bool autoCleanup = false)
 		{
+			this.m_id = SequenceId.NextId;
+			this.m_manager = manager;
 			this.m_data = new Dictionary<string, IObjectSet>();
 			this.m_autoCleanup = autoCleanup;
 		}
@@ -44,7 +48,10 @@ namespace ObjectPooling
 			lock (this)
 			{
 				if (!this.m_data.ContainsKey(name))
-					this.m_data.Add(name, new ObjectSet());
+				{
+					var obj0 = this.m_manager == null ? new ObjectSet() : this.m_manager.Apply("Self.ObjectSet", "admin") as ObjectSet;
+					this.m_data.Add(name, obj0);
+				}
 				this.m_data[name].Set(obj);
 			}
 		}
@@ -58,7 +65,14 @@ namespace ObjectPooling
 				{
 					this.m_data[name].Remove(obj);
 					if (this.m_data[name].Count == 0)
+					{
+						var obj0 = this.m_data[name];
 						this.m_data.Remove(name);
+						if (this.m_manager != null && obj0 is IPoolable)
+						{
+							this.m_manager.Recycle(obj0 as IPoolable);
+						}
+					}
 				}
 			}
 		}
@@ -95,6 +109,30 @@ namespace ObjectPooling
 			get { return this.m_data.Count; }
 		}
 
+		public void CreateAdminNode()
+		{
+			IObjectSet s = new ObjectSet();
+			this.m_data.Add("admin", s);
+		}
+
+		public void Cleanup()
+		{
+			foreach (var o in this.m_data)
+			{
+				o.Value.Cleanup();
+			}
+		}
+
 		#endregion IObjectPool Members
+
+		#region [object]
+
+		public override string ToString()
+		{
+			return string.Format("{0},Id={1}", this.GetType().Name, this.m_id);
+		}
+
+		#endregion [object]
+
 	}
 }
